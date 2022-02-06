@@ -374,11 +374,13 @@ public bool rotation_phase(){
 	// max distance
 	// Start vertical phase
 	if ( is_rotor_at_max() ){
-		// If the vertical is at max
-		if ( pistonsVertical[0].CurrentPosition == maxDistV ){
+		// If the vertical is at max, horizontal phase
+		if ( pistonsVertical[0].CurrentPosition == 10.0f ){
 			currentPhase = 4;
-		} else  if (pistonsHorizontal[0].CurrentPosition == maxDistH ) {
+		// If the horizontal is at max, stop
+		} else  if (pistonsHorizontal[0].CurrentPosition == 10.0f  ) {
 			currentPhase = 1;
+		// Start a vertical phase
 		} else {
 			currentPhase = 3;
 		}
