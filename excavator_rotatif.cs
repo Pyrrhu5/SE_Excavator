@@ -39,7 +39,7 @@ const string elementsName = "[Excavator] - ";
 /* These variables should be fine, but you can edit them if need be */
 // The sum of the speed of all piston on one axis put together
 const float baseVelocity = 0.4f;
-const float rotorVelocity = 1.0f;
+const float rotorVelocity = 0.7f;
 // Number of meter for the pistons to travel in one phase
 const float pistonTravel = 1.0f;
 // Number of strick ticks the cargo is being check
@@ -79,6 +79,8 @@ int? currentPhase = 0;
 // List of drill phases functions
 List<Func<Boolean>> phases = new List<Func<Boolean>>();
 bool phaseHasStarted = false;
+// for standby mode
+bool isStopped = false;
 
 /* =============================================================================
  *                                  COMPONANTS
@@ -167,6 +169,7 @@ public Program() {
 	phases.Add(rotation_phase);
 	phases.Add(vertical_phase);
 	phases.Add(horizontal_phase);
+	phases.Add(reset_phase);
 }
 /* ========================================================================== */
 /*                                   UTILS                                    */
@@ -181,9 +184,6 @@ public void status( string phase ){
 	msg += "\n" + "Distance vertical:   " + current_distance(pistonsVertical).ToString("0.00") + "m";
 	msg += "\n" + "Distance vertical (reversed):   " + current_distance(pistonsVerticalReversed).ToString("0.00") + "m";
 	msg += "\n" + "Distance horizontal:   " + current_distance(pistonsHorizontal).ToString("0.00") + "m";
-	msg += "\n" + "Travel vertical:        " + ((current_distance(pistonsVertical)/maxDistV)*100).ToString("0.00") + "%";
-	msg += "\n" + "Travel vertical (reversed):        " + ((current_distance(pistonsVerticalReversed)/maxDistV)*100).ToString("0.00") + "%";
-	msg += "\n" + "Travel horizontal:        " + ((current_distance(pistonsHorizontal)/maxDistH)*100).ToString("0.00") + "%";
 	if (  display != null ) { display.WriteText(msg); }
 	Echo(msg);
 }
@@ -298,8 +298,8 @@ public bool is_rotor_at_max(){
  * =============================================================================
  */
 
-public bool startup_phase(){
-	status("Initialization");
+public bool reset_phase(){
+	status("Resetting");
 	// Start of the phase
 	if ( !phaseHasStarted ){
 		Runtime.UpdateFrequency = UpdateFrequency.Update10;
@@ -319,6 +319,24 @@ public bool startup_phase(){
 		move_pistons(pistonsVertical, 0.0f, 'v');
 		move_pistons(pistonsVerticalReversed, 10.0f * pistonsVerticalReversed.Count, 'v');
 		return false;
+	}
+	
+	drill.Enabled = false;
+	currentPhase = null;
+	phaseHasStarted = false;
+	status("Ready.");
+	return true;
+}
+
+public bool startup_phase(){
+	status("Initialization");
+	// Start of the phase
+	if ( !phaseHasStarted ){
+		Runtime.UpdateFrequency = UpdateFrequency.Update10;
+		// initialize cargo variables
+		previousCargo = current_cargo_ns();
+		currentIter = 0;
+		isCollecting = false;
 	}
 
 	// Start the drills
@@ -459,6 +477,40 @@ public bool horizontal_phase(){
 	return false;
 }
 
+public bool cargo_phase(){
+	if ( cargo_is_full() ){
+		status("Waiting to empty cargo");
+		rotor.RotorLock = true;
+		drill.Enabled = false;
+		foreach (IMyPistonBase piston in pistonsVertical){
+			piston.Enabled = false;
+		}
+		foreach (IMyPistonBase piston in pistonsVerticalReversed){
+			piston.Enabled = false;
+		}
+		foreach (IMyPistonBase piston in pistonsHorizontal){
+			piston.Enabled = false;
+		}
+		isStopped = true;
+		return false;
+	}
+
+	if ( isStopped ){
+		drill.Enabled = true;
+		rotor.RotorLock = false;
+		foreach (IMyPistonBase piston in pistonsVertical){
+			piston.Enabled = true;
+		}
+		foreach (IMyPistonBase piston in pistonsVerticalReversed){
+			piston.Enabled = true;
+		}
+		foreach (IMyPistonBase piston in pistonsHorizontal){
+			piston.Enabled = true;
+		}
+		isStopped = false;
+	}
+	return true;
+}
 /* =============================================================================
  *                                     MAIN
  * =============================================================================
@@ -468,7 +520,10 @@ public void Main(string argument, UpdateType updateSource) {
 	// Auto execution
 	if ( (updateSource & UpdateType.Update10) != 0 ) {
 		if (currentPhase != null){
-			phases[(int)currentPhase]();
+			// Check if the cargo is full
+			if ( cargo_phase() ){
+				phases[(int)currentPhase]();
+			}
 		} else {
 			Runtime.UpdateFrequency = UpdateFrequency.None;
 		}
@@ -488,7 +543,12 @@ public void Main(string argument, UpdateType updateSource) {
 				break;
 			case "status":
 				status("Status report");
-				return;
+				break;
+			case "reset":
+				phaseHasStarted = false;
+				currentPhase = 5;
+				reset_phase();
+				break;
 			default: 
 				status("ERROR - Wrong argument [start|stop|status]");
 				break;
