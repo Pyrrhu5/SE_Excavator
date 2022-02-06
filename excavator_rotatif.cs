@@ -39,6 +39,7 @@ const string elementsName = "[Excavator] - ";
 /* These variables should be fine, but you can edit them if need be */
 // The sum of the speed of all piston on one axis put together
 const float baseVelocity = 0.4f;
+const float rotorVelocity = 1.0f;
 // Number of meter for the pistons to travel in one phase
 const float pistonTravel = 1.0f;
 // Number of strick ticks the cargo is being check
@@ -307,7 +308,7 @@ public bool startup_phase(){
 		currentIter = 0;
 		isCollecting = false;
 		// Set the rotor at the start position
-		rotor.TargetVelocityRPM = baseVelocity;
+		rotor.TargetVelocityRPM = rotorVelocity;
 		targetAngle = maxAngle;
 		phaseHasStarted = true;
 	}
@@ -331,7 +332,7 @@ public bool startup_phase(){
 
 public bool stop_phase(){
 	if ( !phaseHasStarted ){
-		rotor.TargetVelocityRPM = baseVelocity;
+		rotor.TargetVelocityRPM = rotorVelocity;
 		drill.Enabled = false;
 		move_pistons(pistonsVertical, 0, 'v');
 		move_pistons(pistonsVerticalReversed, 10, 'v');
@@ -360,10 +361,10 @@ public bool rotation_phase(){
 	// Start of the phase, invert the rotation
 	if ( !phaseHasStarted ){
 		if ( targetAngle == minAngle ){
-			rotor.TargetVelocityRPM = -baseVelocity;
+			rotor.TargetVelocityRPM = -rotorVelocity;
 			targetAngle = maxAngle;
 		} else {
-			rotor.TargetVelocityRPM = baseVelocity;
+			rotor.TargetVelocityRPM = rotorVelocity;
 			targetAngle = minAngle;
 		}
 		phaseHasStarted = true;
