@@ -39,7 +39,7 @@ const string elementsName = "[Excavator] - ";
 /* These variables should be fine, but you can edit them if need be */
 // The sum of the speed of all piston on one axis put together
 const float baseVelocity = 0.4f;
-const float rotorVelocity = 0.7f;
+const float rotorVelocity = 0.4f;
 // Number of meter for the pistons to travel in one phase
 const float pistonTravel = 1.0f;
 // Number of strick ticks the cargo is being check
@@ -170,6 +170,28 @@ public Program() {
 	phases.Add(vertical_phase);
 	phases.Add(horizontal_phase);
 	phases.Add(reset_phase);
+
+	// Load the previous state after a game reload
+	string[] storedData = Storage.Split(';');
+	if (storedData.Length > 0){
+		int outVal;
+		currentPhase = int.TryParse(storedData[0], out outVal) ? outVal: (int?) null;
+		// Restart the phase
+		if (currentPhase != null){
+			phases[(int)currentPhase]();
+		}
+	}
+}
+
+/* Persistants data between game reload
+ * as a ; concatenated string
+ */
+public void Save()
+{
+    // Combine the state variables into a string separated by the ';' character
+    Storage = string.Join(";",
+        currentPhase
+    );
 }
 /* ========================================================================== */
 /*                                   UTILS                                    */
