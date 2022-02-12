@@ -39,9 +39,9 @@ const string elementsName = "[Excavator] - ";
 /* These variables should be fine, but you can edit them if need be */
 // The sum of the speed of all piston on one axis put together
 const float baseVelocity = 0.4f;
-const float rotorVelocity = 0.4f;
+const float rotorVelocity = 0.2f;
 // Number of meter for the pistons to travel in one phase
-const float pistonTravel = 1.0f;
+const float pistonTravel = 0.75f;
 // Number of strick ticks the cargo is being check
 // before considering no more ores are being collected
 const int nIterCargoCheck = 100;
@@ -533,6 +533,19 @@ public bool cargo_phase(){
 	}
 	return true;
 }
+
+/* Check if the rig is in operating conditions.
+ * Detected by two means :
+ * 		- If the drill is in functional state
+ * 		- If the inventory of the drill if full, it means
+ * 		  something between the drill and the cargo is broken.
+ */
+public bool is_healthy(){
+	// It will get overwritten quickly by the phase's status
+	status("Maintenance required");
+	return drill.IsFunctional && !drill.GetInventory(0).IsFull;
+}
+
 /* =============================================================================
  *                                     MAIN
  * =============================================================================
@@ -542,8 +555,8 @@ public void Main(string argument, UpdateType updateSource) {
 	// Auto execution
 	if ( (updateSource & UpdateType.Update10) != 0 ) {
 		if (currentPhase != null){
-			// Check if the cargo is full
-			if ( cargo_phase() ){
+			// If the rig is in condition to continue
+			if ( cargo_phase() && is_healthy() ){
 				phases[(int)currentPhase]();
 			}
 		} else {
