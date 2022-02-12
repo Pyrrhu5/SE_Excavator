@@ -100,6 +100,8 @@ List<IMyPistonBase> pistonsHorizontal 		= new List<IMyPistonBase>();
 IMyMotorStator rotor;
 // LCD display
 IMyTextPanel display;
+// Antenna
+IMyTerminalBlock antenna;
 
 /* =============================================================================
  *                                     INIT
@@ -150,6 +152,8 @@ public Program() {
 
 	// LCD
 	display = GridTerminalSystem.GetBlockWithName(elementsName + "LCD") as IMyTextPanel;
+	// Antenna
+	antenna = GridTerminalSystem.GetBlockWithName(elementsName + "Antenna") as IMyTerminalBlock;
   
 	string msg = "Initialized";
 	msg += "\n" + "Drill: " + (drill != null);
@@ -202,6 +206,7 @@ public void status( string phase ){
 	msg += "\n" + "Distance vertical (reversed):   " + current_distance(pistonsVerticalReversed).ToString("0.00") + "m";
 	msg += "\n" + "Distance horizontal:   " + current_distance(pistonsHorizontal).ToString("0.00") + "m";
 	if (  display != null ) { display.WriteText(msg); }
+	if (  antenna != null ) { antenna.CustomName = elementsName + "Antenna " + phase; }
 	Echo(msg);
 }
 
