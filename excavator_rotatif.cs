@@ -172,10 +172,8 @@ public Program() {
 	phases.Add(reset_phase);
 
 	// Load the previous state after a game reload
-	string[] storedData = Storage.Split(';');
-	if (storedData.Length > 0){
-		int outVal;
-		currentPhase = int.TryParse(storedData[0], out outVal) ? outVal: (int?) null;
+	if (Storage){
+		currentPhase = int.TryParse(Storage, out currentPhase);
 		// Restart the phase
 		if (currentPhase != null){
 			phases[(int)currentPhase]();
@@ -188,10 +186,7 @@ public Program() {
  */
 public void Save()
 {
-    // Combine the state variables into a string separated by the ';' character
-    Storage = string.Join(";",
-        currentPhase
-    );
+    Storage = currentPhase.ToString();
 }
 /* ========================================================================== */
 /*                                   UTILS                                    */
