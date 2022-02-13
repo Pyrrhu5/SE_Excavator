@@ -174,11 +174,11 @@ public Program() {
 	// Load the previous state after a game reload
 	if (Storage != null){
 		int i;
-		;
 		// Restart the phase
 		if (int.TryParse(Storage, out i)){
+			Echo("Loaded");
 			currentPhase = (int?) i;
-			phases[(int)currentPhase]();
+			phases[0]();
 		}
 	}
 }
