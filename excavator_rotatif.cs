@@ -100,8 +100,6 @@ List<IMyPistonBase> pistonsHorizontal 		= new List<IMyPistonBase>();
 IMyMotorStator rotor;
 // LCD display
 IMyTextPanel display;
-// Antenna
-IMyTerminalBlock antenna;
 
 /* =============================================================================
  *                                     INIT
@@ -152,8 +150,6 @@ public Program() {
 
 	// LCD
 	display = GridTerminalSystem.GetBlockWithName(elementsName + "LCD") as IMyTextPanel;
-	// Antenna
-	antenna = GridTerminalSystem.GetBlockWithName(elementsName + "Antenna") as IMyTerminalBlock;
   
 	string msg = "Initialized";
 	msg += "\n" + "Drill: " + (drill != null);
@@ -176,10 +172,12 @@ public Program() {
 	phases.Add(reset_phase);
 
 	// Load the previous state after a game reload
-	if (Storage){
-		currentPhase = int.TryParse(Storage, out currentPhase);
+	if (Storage != null){
+		int i;
+		;
 		// Restart the phase
-		if (currentPhase != null){
+		if (int.TryParse(Storage, out i)){
+			currentPhase = (int?) i;
 			phases[(int)currentPhase]();
 		}
 	}
@@ -190,7 +188,9 @@ public Program() {
  */
 public void Save()
 {
-    Storage = currentPhase.ToString();
+	if (currentPhase != null){
+    	Storage = currentPhase.ToString();
+	}
 }
 /* ========================================================================== */
 /*                                   UTILS                                    */
@@ -206,7 +206,6 @@ public void status( string phase ){
 	msg += "\n" + "Distance vertical (reversed):   " + current_distance(pistonsVerticalReversed).ToString("0.00") + "m";
 	msg += "\n" + "Distance horizontal:   " + current_distance(pistonsHorizontal).ToString("0.00") + "m";
 	if (  display != null ) { display.WriteText(msg); }
-	if (  antenna != null ) { antenna.CustomName = elementsName + "Antenna " + phase; }
 	Echo(msg);
 }
 
@@ -542,8 +541,11 @@ public bool cargo_phase(){
  */
 public bool is_healthy(){
 	// It will get overwritten quickly by the phase's status
-	status("Maintenance required");
-	return drill.IsFunctional && !drill.GetInventory(0).IsFull;
+	if (! (drill.IsFunctional && !drill.GetInventory(0).IsFull) ){
+		status("Maintenance required");
+		return false;
+	}
+	return true;
 }
 
 /* =============================================================================
