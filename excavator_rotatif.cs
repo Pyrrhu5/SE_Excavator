@@ -178,6 +178,7 @@ public Program() {
 		if (int.TryParse(Storage, out i)){
 			Echo("Loaded");
 			currentPhase = (int?) i;
+			phaseHasStarted = true;
 			phases[0]();
 		}
 	}
