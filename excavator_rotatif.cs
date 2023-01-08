@@ -111,30 +111,32 @@ public Program() {
 	// Pistons vertical
 	IMyBlockGroup pistonsGroup = GridTerminalSystem.GetBlockGroupWithName(elementsName + "Pistons vertical");
 	pistonsGroup.GetBlocks(temp);
-	foreach ( IMyPistonBase piston in temp ) { 
-		maxDistV += 10.0f;
-		pistonsVertical.Add((IMyPistonBase) piston);
-	}
+    foreach ( IMyPistonBase piston in temp ) { 
+        maxDistV += 10.0f;
+        pistonsVertical.Add((IMyPistonBase) piston);
+    }
 	temp = new List<IMyTerminalBlock>();
 	pistonsGroup = GridTerminalSystem.GetBlockGroupWithName(elementsName + "Pistons vertical r");
 	pistonsGroup.GetBlocks(temp);
-	foreach ( IMyPistonBase piston in temp ) {
-	   maxDistV += 10.0f;
-	   pistonsVerticalReversed.Add((IMyPistonBase) piston);
-	}
-	pistonsVelocityV = baseVelocity / (pistonsVertical.Count + pistonsVerticalReversed.Count);
-	pistonsTravelPerPhaseV = pistonsTravel / (pistonsVertical.Count + pistonsVerticalReversed.Count);
+    if ( pistonsGroup. Count != 0 ){
+        foreach ( IMyPistonBase piston in temp ) {
+            maxDistV += 10.0f;
+            pistonsVerticalReversed.Add((IMyPistonBase) piston);
+        }
+    }
+    pistonsVelocityV = baseVelocity / (pistonsVertical.Count + pistonsVerticalReversed.Count);
+    pistonsTravelPerPhaseV = pistonsTravel / (pistonsVertical.Count + pistonsVerticalReversed.Count);
 
 	// Pistons horizontal
 	temp = new List<IMyTerminalBlock>();
 	pistonsGroup = GridTerminalSystem.GetBlockGroupWithName(elementsName + "Pistons horizontal");
 	pistonsGroup.GetBlocks(temp);
-	foreach ( IMyPistonBase piston in temp ) {
-		maxDistH += 10.0f;
-		pistonsHorizontal.Add((IMyPistonBase) piston);
-	}
-	pistonsVelocityH = baseVelocity / pistonsHorizontal.Count;
-	pistonsTravelPerPhaseH = pistonsTravel / pistonsHorizontal.Count;
+    foreach ( IMyPistonBase piston in temp ) {
+        maxDistH += 10.0f;
+        pistonsHorizontal.Add((IMyPistonBase) piston);
+    }
+    pistonsVelocityH = baseVelocity / pistonsHorizontal.Count;
+    pistonsTravelPerPhaseH = pistonsTravel / pistonsHorizontal.Count;
 
 	// Drill
 	drill = GridTerminalSystem.GetBlockWithName(elementsName + "Drill") as IMyShipDrill;
@@ -150,7 +152,6 @@ public Program() {
 
 	// LCD
 	display = GridTerminalSystem.GetBlockWithName(elementsName + "LCD") as IMyTextPanel;
-  
 	string msg = "Initialized";
 	msg += "\n" + "Drill: " + (drill != null);
 	msg += "\n" + "Rotor: " + (rotor != null);
@@ -167,18 +168,16 @@ public Program() {
 	phases.Add(startup_phase);
 	phases.Add(stop_phase);
 	phases.Add(rotation_phase);
-	phases.Add(vertical_phase);
-	phases.Add(horizontal_phase);
+    phases.Add(vertical_phase);
+    phases.Add(horizontal_phase);
 	phases.Add(reset_phase);
 
 	// Load the previous state after a game reload
 	if (Storage != null){
 		int i;
 		// Restart the phase
-		if (int.TryParse(Storage, out i)){
-			Echo("Loaded");
-			currentPhase = (int?) i;
-			phaseHasStarted = true;
+		if (int.TryParse(Storage, out i)){		
+            currentPhase = (int?) i;
 			phases[0]();
 		}
 	}
@@ -204,7 +203,9 @@ public void status( string phase ){
 	msg += "\n" + "Cargo load:" + percentCargo.ToString("0.00") + "%" ;
 	msg += "\n" + "Cargo load (without stones): " + percentCargoNs.ToString("0.00") + "%" ;
 	msg += "\n" + "Distance vertical:   " + current_distance(pistonsVertical).ToString("0.00") + "m";
-	msg += "\n" + "Distance vertical (reversed):   " + current_distance(pistonsVerticalReversed).ToString("0.00") + "m";
+    if ( pistonsVerticalReversed.Count != 0){
+        msg += "\n" + "Distance vertical (reversed):   " + current_distance(pistonsVerticalReversed).ToString("0.00") + "m";
+    }
 	msg += "\n" + "Distance horizontal:   " + current_distance(pistonsHorizontal).ToString("0.00") + "m";
 	if (  display != null ) { display.WriteText(msg); }
 	Echo(msg);
@@ -296,6 +297,7 @@ public void move_pistons(List<IMyPistonBase> pistons, float target, char axis){
  * of the first piston in the list
  */
 public bool pistons_at_max(List<IMyPistonBase> pistons, bool isReversed){
+    if ( pistons.Count == 0 ){ return true; }
 	float maxDistance;
 	if ( isReversed ){
 		maxDistance = pistons[0].MinLimit;
@@ -303,7 +305,7 @@ public bool pistons_at_max(List<IMyPistonBase> pistons, bool isReversed){
 		maxDistance = pistons[0].MaxLimit;
 	}
 
-	return ( pistons[0].CurrentPosition == maxDistance );
+    return ( pistons[0].CurrentPosition == maxDistance );
 }
 
 public bool is_rotor_at_max(){
@@ -339,7 +341,9 @@ public bool reset_phase(){
 		return false;
 	} else if ( pistonsVertical[0].CurrentPosition != 0.0f){
 		move_pistons(pistonsVertical, 0.0f, 'v');
-		move_pistons(pistonsVerticalReversed, 10.0f * pistonsVerticalReversed.Count, 'v');
+        if ( pistonsVerticalReversed.Count != 0 ){
+            move_pistons(pistonsVerticalReversed, 10.0f * pistonsVerticalReversed.Count, 'v');
+        }
 		return false;
 	}
 	
@@ -375,8 +379,10 @@ public bool stop_phase(){
 		rotor.TargetVelocityRPM = rotorVelocity;
 		drill.Enabled = false;
 		move_pistons(pistonsVertical, 0, 'v');
-		move_pistons(pistonsVerticalReversed, 10, 'v');
-		move_pistons(pistonsHorizontal, 0, 'h');
+        if ( pistonsVerticalReversed.Count != 0 ){
+            move_pistons(pistonsVerticalReversed, 10, 'v');
+        }
+        move_pistons(pistonsHorizontal, 0, 'h');
 		phaseHasStarted = true;
 	}
 
@@ -434,16 +440,18 @@ public bool vertical_phase(){
 	status("Drilling - Vertical phase");
 	// Start of the phase, lower pistons
 	if ( !phaseHasStarted ){
-		move_pistons(
-			pistonsVertical,
-			pistonsVertical[0].MaxLimit + pistonsTravelPerPhaseV,
-			'v'
-		);
-		move_pistons(
-			pistonsVerticalReversed,
-			pistonsVerticalReversed[0].MaxLimit - pistonsTravelPerPhaseV,
-			'v'
-		);
+        move_pistons(
+            pistonsVertical,
+            pistonsVertical[0].MaxLimit + pistonsTravelPerPhaseV,
+            'v'
+        );
+        if ( pistonsVerticalReversed.Count != 0 ){
+            move_pistons(
+                pistonsVerticalReversed,
+                pistonsVerticalReversed[0].MaxLimit - pistonsTravelPerPhaseV,
+                'v'
+            );
+        }
 		phaseHasStarted = true;
 	}
 
@@ -467,11 +475,13 @@ public bool horizontal_phase(){
 			0,
 			'v'
 		);
-		move_pistons(
-			pistonsVerticalReversed,
-			10 * pistonsVerticalReversed.Count,
-			'v'
-		);
+        if ( pistonsVerticalReversed.Count != 0 ){
+            move_pistons(
+                pistonsVerticalReversed,
+                10 * pistonsVerticalReversed.Count,
+                'v'
+            );
+        }
 	}
 
 	// Wait for the vertical pistons to be raised
